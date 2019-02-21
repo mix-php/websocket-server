@@ -2,7 +2,7 @@
 
 namespace Mix\WebSocket\Server;
 
-use Mix\Core\Bean\BeanObject;
+use Mix\Core\Bean\AbstractObject;
 use Mix\Core\Coroutine\Coroutine;
 use Mix\Helpers\ProcessHelper;
 
@@ -11,7 +11,7 @@ use Mix\Helpers\ProcessHelper;
  * @package Mix\WebSocket\Server
  * @author LIUJIAN <coder.keda@gmail.com>
  */
-class WebSocketServer extends BeanObject
+class WebSocketServer extends AbstractObject
 {
 
     /**
@@ -147,7 +147,10 @@ class WebSocketServer extends BeanObject
     public function onHandshake($request, $response)
     {
         try {
-            // 执行请求
+            // 执行
+
+            var_dump($request);
+            var_dump($response);
 
             // 开启协程时，移除容器
             if (($tid = Coroutine::id()) !== -1) {
@@ -166,7 +169,10 @@ class WebSocketServer extends BeanObject
     public function onMessage($server, $frame)
     {
         try {
-            // 执行请求
+            // 执行
+
+            var_dump($server);
+            var_dump($frame);
 
             // 开启协程时，移除容器
             if (($tid = Coroutine::id()) !== -1) {
@@ -185,7 +191,10 @@ class WebSocketServer extends BeanObject
     public function onClose($server, $fd)
     {
         try {
-            // 执行请求
+            // 执行
+
+            var_dump($server);
+            var_dump($fd);
 
             // 开启协程时，移除容器
             if (($tid = Coroutine::id()) !== -1) {
