@@ -3,7 +3,7 @@
 namespace Mix\WebSocket\Server;
 
 use Mix\Core\Bean\AbstractObject;
-use Mix\Core\Coroutine\Coroutine;
+use Mix\Core\Coroutine;
 use Mix\Helpers\ProcessHelper;
 
 /**
@@ -24,7 +24,7 @@ class WebSocketServer extends AbstractObject
      * 端口
      * @var int
      */
-    public $port = 9501;
+    public $port = 9502;
 
     /**
      * 配置文件
@@ -51,8 +51,6 @@ class WebSocketServer extends AbstractObject
         'worker_num'       => 8,
         // 任务进程数
         'task_worker_num'  => 0,
-        // 进程的最大任务数
-        'max_request'      => 10000,
         // PID 文件
         'pid_file'         => '/var/run/mix-websocketd.pid',
         // 日志文件路径
@@ -98,7 +96,7 @@ class WebSocketServer extends AbstractObject
     /**
      * 主进程启动事件
      */
-    public function onStart($server)
+    public function onStart(\Swoole\WebSocket\Server $server)
     {
         try {
             // 进程命名
@@ -109,7 +107,7 @@ class WebSocketServer extends AbstractObject
     }
 
     // 管理进程启动事件
-    public function onManagerStart($server)
+    public function onManagerStart(\Swoole\WebSocket\Server $server)
     {
         try {
             // 进程命名
@@ -122,7 +120,7 @@ class WebSocketServer extends AbstractObject
     /**
      * 工作进程启动事件
      */
-    public function onWorkerStart($server, $workerId)
+    public function onWorkerStart(\Swoole\WebSocket\Server $server, int $workerId)
     {
         try {
             // 进程命名
@@ -133,7 +131,7 @@ class WebSocketServer extends AbstractObject
             }
             // 实例化App
             $config = require $this->configurationFile;
-            new \Mix\Http\Application($config);
+            new \Mix\WebSocket\Application($config);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -144,14 +142,12 @@ class WebSocketServer extends AbstractObject
      * @param $request
      * @param $response
      */
-    public function onHandshake($request, $response)
+    public function onHandshake(\Swoole\Http\Request $request, \Swoole\Http\Response $response)
     {
         try {
             // 执行
-
-            var_dump($request);
-            var_dump($response);
-
+            \Mix::$app->request->beforeInitialize($request);
+            \Mix::$app->response->beforeInitialize($response);
             // 开启协程时，移除容器
             if (($tid = Coroutine::id()) !== -1) {
                 \Mix::$app->container->delete($tid);
@@ -166,13 +162,10 @@ class WebSocketServer extends AbstractObject
      * @param $server
      * @param $frame
      */
-    public function onMessage($server, $frame)
+    public function onMessage(\Swoole\WebSocket\Server $server, \Swoole\WebSocket\Frame $frame)
     {
         try {
             // 执行
-
-            var_dump($server);
-            var_dump($frame);
 
             // 开启协程时，移除容器
             if (($tid = Coroutine::id()) !== -1) {
@@ -188,13 +181,15 @@ class WebSocketServer extends AbstractObject
      * @param $server
      * @param $fd
      */
-    public function onClose($server, $fd)
+    public function onClose(\Swoole\WebSocket\Server $server, int $fd)
     {
         try {
+            // 检查连接是否为有效的WebSocket客户端连接
+            if (!$server->isEstablished($fd)) {
+                return;
+            }
             // 执行
 
-            var_dump($server);
-            var_dump($fd);
 
             // 开启协程时，移除容器
             if (($tid = Coroutine::id()) !== -1) {
