@@ -31,6 +31,11 @@ class SwooleEvent
     const HANDSHAKE = 'handshake';
 
     /**
+     * Open
+     */
+    const OPEN = 'open';
+
+    /**
      * Message
      */
     const MESSAGE = 'message';

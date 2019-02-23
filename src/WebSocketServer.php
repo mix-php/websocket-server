@@ -95,6 +95,7 @@ class WebSocketServer extends AbstractObject
 
     /**
      * 主进程启动事件
+     * @param \Swoole\WebSocket\Server $server
      */
     public function onStart(\Swoole\WebSocket\Server $server)
     {
@@ -106,7 +107,10 @@ class WebSocketServer extends AbstractObject
         }
     }
 
-    // 管理进程启动事件
+    /**
+     * 管理进程启动事件
+     * @param \Swoole\WebSocket\Server $server
+     */
     public function onManagerStart(\Swoole\WebSocket\Server $server)
     {
         try {
@@ -119,6 +123,8 @@ class WebSocketServer extends AbstractObject
 
     /**
      * 工作进程启动事件
+     * @param \Swoole\WebSocket\Server $server
+     * @param int $workerId
      */
     public function onWorkerStart(\Swoole\WebSocket\Server $server, int $workerId)
     {
@@ -139,15 +145,17 @@ class WebSocketServer extends AbstractObject
 
     /**
      * 握手事件
-     * @param $request
-     * @param $response
+     * @param \Swoole\Http\Request $request
+     * @param \Swoole\Http\Response $response
      */
     public function onHandshake(\Swoole\Http\Request $request, \Swoole\Http\Response $response)
     {
         try {
-            // 执行
+            // 初始化
             \Mix::$app->request->beforeInitialize($request);
             \Mix::$app->response->beforeInitialize($response);
+            // 执行拦截
+            \Mix::$app->registry->intercept();
             // 开启协程时，移除容器
             if (($tid = Coroutine::id()) !== -1) {
                 \Mix::$app->container->delete($tid);
@@ -159,8 +167,8 @@ class WebSocketServer extends AbstractObject
 
     /**
      * 消息事件
-     * @param $server
-     * @param $frame
+     * @param \Swoole\WebSocket\Server $server
+     * @param \Swoole\WebSocket\Frame $frame
      */
     public function onMessage(\Swoole\WebSocket\Server $server, \Swoole\WebSocket\Frame $frame)
     {
@@ -178,8 +186,8 @@ class WebSocketServer extends AbstractObject
 
     /**
      * 关闭事件
-     * @param $server
-     * @param $fd
+     * @param \Swoole\WebSocket\Server $server
+     * @param int $fd
      */
     public function onClose(\Swoole\WebSocket\Server $server, int $fd)
     {
