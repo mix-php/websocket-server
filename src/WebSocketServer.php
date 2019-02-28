@@ -27,22 +27,22 @@ class WebSocketServer extends AbstractObject
     public $port = 9502;
 
     /**
-     * 配置文件
+     * 应用配置文件
      * @var string
      */
-    public $configurationFile = '';
+    public $configFile = '';
 
     /**
      * 运行参数
      * @var array
      */
-    public $settings = [];
+    public $setting = [];
 
     /**
      * 默认运行参数
      * @var array
      */
-    protected $_settings = [
+    protected $_setting = [
         // 开启协程
         'enable_coroutine' => false,
         // 主进程事件处理线程数
@@ -78,8 +78,8 @@ class WebSocketServer extends AbstractObject
         // 初始化
         $this->_server = new \Swoole\WebSocket\Server($this->host, $this->port);
         // 配置参数
-        $this->_settings = $this->settings + $this->_settings;
-        $this->_server->set($this->_settings);
+        $this->_setting = $this->setting + $this->_setting;
+        $this->_server->set($this->_setting);
         // 绑定事件
         $this->_server->on(SwooleEvent::START, [$this, 'onStart']);
         $this->_server->on(SwooleEvent::MANAGER_START, [$this, 'onManagerStart']);
@@ -136,7 +136,7 @@ class WebSocketServer extends AbstractObject
                 ProcessHelper::setProcessTitle("mix-websocketd: task #{$workerId}");
             }
             // 实例化App
-            $config = require $this->configurationFile;
+            $config = require $this->configFile;
             new \Mix\WebSocket\Application($config);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
@@ -230,13 +230,13 @@ EOL;
         println("PHP            Version:   {$phpVersion}");
         println("Swoole         Version:   {$swooleVersion}");
         println('Framework      Version:   ' . \Mix::$version);
-        println('Hot            Update:    ' . ($this->_settings['max_request'] == 1 ? 'enabled' : 'disabled'));
-        println('Coroutine      Mode:      ' . ($this->_settings['enable_coroutine'] ? 'enabled' : 'disabled'));
+        println('Hot            Update:    ' . ($this->_setting['max_request'] == 1 ? 'enabled' : 'disabled'));
+        println('Coroutine      Mode:      ' . ($this->_setting['enable_coroutine'] ? 'enabled' : 'disabled'));
         println("Listen         Addr:      {$this->host}");
         println("Listen         Port:      {$this->port}");
-        println('Reactor        Num:       ' . $this->_settings['reactor_num']);
-        println('Worker         Num:       ' . $this->_settings['worker_num']);
-        println("Configuration  File:      {$this->configurationFile}");
+        println('Reactor        Num:       ' . $this->_setting['reactor_num']);
+        println('Worker         Num:       ' . $this->_setting['worker_num']);
+        println("Configuration  File:      {$this->configFile}");
     }
 
 }
