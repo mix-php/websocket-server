@@ -135,8 +135,8 @@ class WebSocketServer extends AbstractObject
             } else {
                 ProcessHelper::setProcessTitle("mix-websocketd: task #{$workerId}");
             }
-//            // 实例化App
-//            new \Mix\WebSocket\Application(require $this->configFile);
+            // 实例化App
+            new \Mix\WebSocket\Application(require $this->configFile);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -150,15 +150,15 @@ class WebSocketServer extends AbstractObject
     public function onHandshake(\Swoole\Http\Request $request, \Swoole\Http\Response $response)
     {
         try {
-//            // 初始化
-//            \Mix::$app->request->beforeInitialize($request);
-//            \Mix::$app->response->beforeInitialize($response);
-//            // 执行拦截
-//            \Mix::$app->registry->intercept();
-//            // 开启协程时，移除容器
-//            if (($tid = Coroutine::id()) !== -1) {
-//                \Mix::$app->container->delete($tid);
-//            }
+            // 初始化
+            \Mix::$app->request->beforeInitialize($request);
+            \Mix::$app->response->beforeInitialize($response);
+            // 执行拦截
+            \Mix::$app->registry->intercept();
+            // 开启协程时，移除容器
+            if (($tid = Coroutine::id()) !== -1) {
+                \Mix::$app->container->delete($tid);
+            }
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
