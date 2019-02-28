@@ -135,9 +135,8 @@ class WebSocketServer extends AbstractObject
             } else {
                 ProcessHelper::setProcessTitle("mix-websocketd: task #{$workerId}");
             }
-            // 实例化App
-            $config = require $this->configFile;
-            new \Mix\WebSocket\Application($config);
+//            // 实例化App
+//            new \Mix\WebSocket\Application(require $this->configFile);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -151,15 +150,15 @@ class WebSocketServer extends AbstractObject
     public function onHandshake(\Swoole\Http\Request $request, \Swoole\Http\Response $response)
     {
         try {
-            // 初始化
-            \Mix::$app->request->beforeInitialize($request);
-            \Mix::$app->response->beforeInitialize($response);
-            // 执行拦截
-            \Mix::$app->registry->intercept();
-            // 开启协程时，移除容器
-            if (($tid = Coroutine::id()) !== -1) {
-                \Mix::$app->container->delete($tid);
-            }
+//            // 初始化
+//            \Mix::$app->request->beforeInitialize($request);
+//            \Mix::$app->response->beforeInitialize($response);
+//            // 执行拦截
+//            \Mix::$app->registry->intercept();
+//            // 开启协程时，移除容器
+//            if (($tid = Coroutine::id()) !== -1) {
+//                \Mix::$app->container->delete($tid);
+//            }
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -173,12 +172,12 @@ class WebSocketServer extends AbstractObject
     public function onMessage(\Swoole\WebSocket\Server $server, \Swoole\WebSocket\Frame $frame)
     {
         try {
-            // 执行
-
-            // 开启协程时，移除容器
-            if (($tid = Coroutine::id()) !== -1) {
-                \Mix::$app->container->delete($tid);
-            }
+//            // 执行
+//
+//            // 开启协程时，移除容器
+//            if (($tid = Coroutine::id()) !== -1) {
+//                \Mix::$app->container->delete($tid);
+//            }
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -192,17 +191,17 @@ class WebSocketServer extends AbstractObject
     public function onClose(\Swoole\WebSocket\Server $server, int $fd)
     {
         try {
-            // 检查连接是否为有效的WebSocket客户端连接
-            if (!$server->isEstablished($fd)) {
-                return;
-            }
-            // 执行
-
-
-            // 开启协程时，移除容器
-            if (($tid = Coroutine::id()) !== -1) {
-                \Mix::$app->container->delete($tid);
-            }
+//            // 检查连接是否为有效的WebSocket客户端连接
+//            if (!$server->isEstablished($fd)) {
+//                return;
+//            }
+//            // 执行
+//
+//
+//            // 开启协程时，移除容器
+//            if (($tid = Coroutine::id()) !== -1) {
+//                \Mix::$app->container->delete($tid);
+//            }
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -230,8 +229,8 @@ EOL;
         println("PHP            Version:   {$phpVersion}");
         println("Swoole         Version:   {$swooleVersion}");
         println('Framework      Version:   ' . \Mix::$version);
-        println('Hot            Update:    ' . ($this->_setting['max_request'] == 1 ? 'enabled' : 'disabled'));
-        println('Coroutine      Mode:      ' . ($this->_setting['enable_coroutine'] ? 'enabled' : 'disabled'));
+        $this->_setting['max_request'] == 1 and println('Hot            Update:    enabled');
+        $this->_setting['enable_coroutine'] and println('Coroutine      Mode:      enabled');
         println("Listen         Addr:      {$this->host}");
         println("Listen         Port:      {$this->port}");
         println('Reactor        Num:       ' . $this->_setting['reactor_num']);
