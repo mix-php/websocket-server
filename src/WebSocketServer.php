@@ -39,6 +39,12 @@ class WebSocketServer extends AbstractObject
     public $setting = [];
 
     /**
+     * 服务名称
+     * @var string
+     */
+    const SERVER_NAME = 'mix-websocketd';
+
+    /**
      * 默认运行参数
      * @var array
      */
@@ -101,7 +107,7 @@ class WebSocketServer extends AbstractObject
     {
         try {
             // 进程命名
-            ProcessHelper::setProcessTitle("mix-websocketd: master {$this->host}:{$this->port}");
+            ProcessHelper::setProcessTitle(static::SERVER_NAME . ": master {$this->host}:{$this->port}");
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -115,7 +121,7 @@ class WebSocketServer extends AbstractObject
     {
         try {
             // 进程命名
-            ProcessHelper::setProcessTitle("mix-websocketd: manager");
+            ProcessHelper::setProcessTitle(static::SERVER_NAME . ": manager");
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -131,9 +137,9 @@ class WebSocketServer extends AbstractObject
         try {
             // 进程命名
             if ($workerId < $server->setting['worker_num']) {
-                ProcessHelper::setProcessTitle("mix-websocketd: worker #{$workerId}");
+                ProcessHelper::setProcessTitle(static::SERVER_NAME . ": worker #{$workerId}");
             } else {
-                ProcessHelper::setProcessTitle("mix-websocketd: task #{$workerId}");
+                ProcessHelper::setProcessTitle(static::SERVER_NAME . ": task #{$workerId}");
             }
             // 实例化App
             new \Mix\WebSocket\Application(require $this->configFile);
@@ -150,18 +156,20 @@ class WebSocketServer extends AbstractObject
     public function onHandshake(\Swoole\Http\Request $request, \Swoole\Http\Response $response)
     {
         try {
-            // 初始化
+            // 前置初始化
             \Mix::$app->request->beforeInitialize($request);
             \Mix::$app->response->beforeInitialize($response);
-            \Mix::$app->wsSession->beforeInitialize();
+            \Mix::$app->wsSession->beforeInitialize($request->fd);
             // 拦截
             \Mix::$app->registry->intercept();
-            // 开启协程时，移除容器
-            if (($tid = Coroutine::id()) !== -1) {
-                \Mix::$app->container->delete($tid);
-            }
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
+        }
+        // 清扫组件容器
+        \Mix::$app->cleanComponents();
+        // 开启协程时，移除容器
+        if (($tid = Coroutine::id()) !== -1) {
+            \Mix::$app->container->delete($tid);
         }
     }
 
@@ -173,14 +181,19 @@ class WebSocketServer extends AbstractObject
     public function onMessage(\Swoole\WebSocket\Server $server, \Swoole\WebSocket\Frame $frame)
     {
         try {
+            // 前置初始化
+            \Mix::$app->wsSession->beforeInitialize($frame->fd);
+            \Mix::$app->ws->beforeInitialize($server, $frame->fd);
             // 处理消息
             \Mix::$app->registry->handleMessage();
-            // 开启协程时，移除容器
-            if (($tid = Coroutine::id()) !== -1) {
-                \Mix::$app->container->delete($tid);
-            }
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
+        }
+        // 清扫组件容器
+        \Mix::$app->cleanComponents();
+        // 开启协程时，移除容器
+        if (($tid = Coroutine::id()) !== -1) {
+            \Mix::$app->container->delete($tid);
         }
     }
 
@@ -191,19 +204,25 @@ class WebSocketServer extends AbstractObject
      */
     public function onClose(\Swoole\WebSocket\Server $server, int $fd)
     {
+        // 检查连接是否为有效的WebSocket客户端连接
+        if (!$server->isEstablished($fd)) {
+            return;
+        }
         try {
-            // 检查连接是否为有效的WebSocket客户端连接
-            if (!$server->isEstablished($fd)) {
-                return;
-            }
+            // 前置初始化
+            \Mix::$app->wsSession->beforeInitialize($fd);
             // 处理连接关闭
             \Mix::$app->registry->handleConnectionClosed();
-            // 开启协程时，移除容器
-            if (($tid = Coroutine::id()) !== -1) {
-                \Mix::$app->container->delete($tid);
-            }
+            // 后置初始化
+            \Mix::$app->wsSession->afterInitialize();
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
+        }
+        // 清扫组件容器
+        \Mix::$app->cleanComponents();
+        // 开启协程时，移除容器
+        if (($tid = Coroutine::id()) !== -1) {
+            \Mix::$app->container->delete($tid);
         }
     }
 
@@ -224,7 +243,7 @@ _/ / / / / / / /\ \/ _ / /_/ / / / / /_/ /
 
 
 EOL;
-        println('Server         Name:      mix-websocketd');
+        println('Server         Name:      ' . static::SERVER_NAME);
         println('System         Name:      ' . strtolower(PHP_OS));
         println("PHP            Version:   {$phpVersion}");
         println("Swoole         Version:   {$swooleVersion}");
