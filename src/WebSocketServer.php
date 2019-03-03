@@ -4,7 +4,7 @@ namespace Mix\WebSocket\Server;
 
 use Mix\Core\Bean\AbstractObject;
 use Mix\Core\Coroutine;
-use Mix\Helpers\ProcessHelper;
+use Mix\Helper\ProcessHelper;
 
 /**
  * Class WebSocketServer
