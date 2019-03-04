@@ -67,6 +67,8 @@ class WebSocketServer extends AbstractObject
         'max_wait_time'    => 60,
         // 开启后，PDO 协程多次 prepare 才不会有 40ms 延迟
         'open_tcp_nodelay' => true,
+        // 开启自定义握手
+        'enable_handshake' => false,
     ];
 
     /**
@@ -90,7 +92,11 @@ class WebSocketServer extends AbstractObject
         $this->_server->on(SwooleEvent::START, [$this, 'onStart']);
         $this->_server->on(SwooleEvent::MANAGER_START, [$this, 'onManagerStart']);
         $this->_server->on(SwooleEvent::WORKER_START, [$this, 'onWorkerStart']);
-        $this->_server->on(SwooleEvent::HANDSHAKE, [$this, 'onHandshake']);
+        if ($this->_setting['enable_handshake']) {
+            $this->_server->on(SwooleEvent::HANDSHAKE, [$this, 'onHandshake']);
+        } else {
+            $this->_server->on(SwooleEvent::OPEN, [$this, 'onOpen']);
+        }
         $this->_server->on(SwooleEvent::MESSAGE, [$this, 'onMessage']);
         $this->_server->on(SwooleEvent::CLOSE, [$this, 'onClose']);
         // 欢迎信息
@@ -174,6 +180,31 @@ class WebSocketServer extends AbstractObject
     }
 
     /**
+     * 开启事件
+     * @param \Swoole\WebSocket\Server $server
+     * @param \Swoole\Http\Request $request
+     */
+    public function onOpen(\Swoole\WebSocket\Server $server, \Swoole\Http\Request $request)
+    {
+        try {
+            // 前置初始化
+            \Mix::$app->request->beforeInitialize($request);
+            \Mix::$app->wsSession->beforeInitialize($request->fd);
+            \Mix::$app->ws->beforeInitialize($server, $request->fd);
+            // 处理消息
+            \Mix::$app->registry->handleOpen();
+        } catch (\Throwable $e) {
+            \Mix::$app->error->handleException($e);
+        }
+        // 清扫组件容器
+        \Mix::$app->cleanComponents();
+        // 开启协程时，移除容器
+        if (($tid = Coroutine::id()) !== -1) {
+            \Mix::$app->container->delete($tid);
+        }
+    }
+
+    /**
      * 消息事件
      * @param \Swoole\WebSocket\Server $server
      * @param \Swoole\WebSocket\Frame $frame
@@ -185,7 +216,7 @@ class WebSocketServer extends AbstractObject
             \Mix::$app->wsSession->beforeInitialize($frame->fd);
             \Mix::$app->ws->beforeInitialize($server, $frame->fd);
             // 处理消息
-            \Mix::$app->registry->handleMessage();
+            \Mix::$app->registry->handleMessage($frame);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -212,7 +243,7 @@ class WebSocketServer extends AbstractObject
             // 前置初始化
             \Mix::$app->wsSession->beforeInitialize($fd);
             // 处理连接关闭
-            \Mix::$app->registry->handleConnectionClosed();
+            \Mix::$app->registry->handleClose();
             // 后置初始化
             \Mix::$app->wsSession->afterInitialize();
         } catch (\Throwable $e) {
