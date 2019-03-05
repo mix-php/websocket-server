@@ -111,12 +111,8 @@ class WebSocketServer extends AbstractObject
      */
     public function onStart(\Swoole\WebSocket\Server $server)
     {
-        try {
-            // 进程命名
-            ProcessHelper::setProcessTitle(static::SERVER_NAME . ": master {$this->host}:{$this->port}");
-        } catch (\Throwable $e) {
-            \Mix::$app->error->handleException($e);
-        }
+        // 进程命名
+        ProcessHelper::setProcessTitle(static::SERVER_NAME . ": master {$this->host}:{$this->port}");
     }
 
     /**
@@ -125,12 +121,8 @@ class WebSocketServer extends AbstractObject
      */
     public function onManagerStart(\Swoole\WebSocket\Server $server)
     {
-        try {
-            // 进程命名
-            ProcessHelper::setProcessTitle(static::SERVER_NAME . ": manager");
-        } catch (\Throwable $e) {
-            \Mix::$app->error->handleException($e);
-        }
+        // 进程命名
+        ProcessHelper::setProcessTitle(static::SERVER_NAME . ": manager");
     }
 
     /**
@@ -140,18 +132,14 @@ class WebSocketServer extends AbstractObject
      */
     public function onWorkerStart(\Swoole\WebSocket\Server $server, int $workerId)
     {
-        try {
-            // 进程命名
-            if ($workerId < $server->setting['worker_num']) {
-                ProcessHelper::setProcessTitle(static::SERVER_NAME . ": worker #{$workerId}");
-            } else {
-                ProcessHelper::setProcessTitle(static::SERVER_NAME . ": task #{$workerId}");
-            }
-            // 实例化App
-            new \Mix\WebSocket\Application(require $this->configFile);
-        } catch (\Throwable $e) {
-            \Mix::$app->error->handleException($e);
+        // 进程命名
+        if ($workerId < $server->setting['worker_num']) {
+            ProcessHelper::setProcessTitle(static::SERVER_NAME . ": worker #{$workerId}");
+        } else {
+            ProcessHelper::setProcessTitle(static::SERVER_NAME . ": task #{$workerId}");
         }
+        // 实例化App
+        new \Mix\WebSocket\Application(require $this->configFile);
     }
 
     /**
@@ -167,7 +155,7 @@ class WebSocketServer extends AbstractObject
             \Mix::$app->response->beforeInitialize($response);
             \Mix::$app->wsSession->beforeInitialize($request->fd);
             // 拦截
-            \Mix::$app->registry->intercept();
+            \Mix::$app->registry->intercept(\Mix::$app->request, \Mix::$app->response);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -192,7 +180,7 @@ class WebSocketServer extends AbstractObject
             \Mix::$app->wsSession->beforeInitialize($request->fd);
             \Mix::$app->ws->beforeInitialize($server, $request->fd);
             // 处理消息
-            \Mix::$app->registry->handleOpen();
+            \Mix::$app->registry->handleOpen(\Mix::$app->request);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -215,8 +203,9 @@ class WebSocketServer extends AbstractObject
             // 前置初始化
             \Mix::$app->wsSession->beforeInitialize($frame->fd);
             \Mix::$app->ws->beforeInitialize($server, $frame->fd);
+            \Mix::$app->frame->beforeInitialize($frame);
             // 处理消息
-            \Mix::$app->registry->handleMessage($frame);
+            \Mix::$app->registry->handleMessage(\Mix::$app->frame);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
