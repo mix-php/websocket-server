@@ -154,7 +154,6 @@ class WebSocketServer extends AbstractObject
             // 前置初始化
             \Mix::$app->request->beforeInitialize($request);
             \Mix::$app->response->beforeInitialize($response);
-            \Mix::$app->wsSession->beforeInitialize($fd);
             \Mix::$app->registry->beforeInitialize($fd);
             // 拦截
             \Mix::$app->registry->handleHandshake(\Mix::$app->request, \Mix::$app->response);
@@ -180,7 +179,6 @@ class WebSocketServer extends AbstractObject
             $fd = $request->fd;
             // 前置初始化
             \Mix::$app->request->beforeInitialize($request);
-            \Mix::$app->wsSession->beforeInitialize($fd);
             \Mix::$app->ws->beforeInitialize($server, $fd);
             \Mix::$app->registry->beforeInitialize($fd);
             // 处理消息
@@ -206,7 +204,6 @@ class WebSocketServer extends AbstractObject
         try {
             $fd = $frame->fd;
             // 前置初始化
-            \Mix::$app->wsSession->beforeInitialize($fd);
             \Mix::$app->ws->beforeInitialize($server, $fd);
             \Mix::$app->frame->beforeInitialize($frame);
             \Mix::$app->registry->beforeInitialize($fd);
@@ -236,13 +233,10 @@ class WebSocketServer extends AbstractObject
         }
         try {
             // 前置初始化
-            \Mix::$app->wsSession->beforeInitialize($fd);
             \Mix::$app->ws->beforeInitialize($server, $fd);
             \Mix::$app->registry->beforeInitialize($fd);
             // 处理连接关闭
             \Mix::$app->registry->handleClose(\Mix::$app->ws);
-            // 后置初始化
-            \Mix::$app->wsSession->afterInitialize();
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -260,7 +254,7 @@ class WebSocketServer extends AbstractObject
     protected function welcome()
     {
         $swooleVersion = swoole_version();
-        $phpVersion    = PHP_VERSION;
+        $phpVersion = PHP_VERSION;
         echo <<<EOL
                              _____
 _______ ___ _____ ___   _____  / /_  ____
