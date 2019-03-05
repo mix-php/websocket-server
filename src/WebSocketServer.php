@@ -150,12 +150,14 @@ class WebSocketServer extends AbstractObject
     public function onHandshake(\Swoole\Http\Request $request, \Swoole\Http\Response $response)
     {
         try {
+            $fd = $request->fd;
             // 前置初始化
             \Mix::$app->request->beforeInitialize($request);
             \Mix::$app->response->beforeInitialize($response);
-            \Mix::$app->wsSession->beforeInitialize($request->fd);
+            \Mix::$app->wsSession->beforeInitialize($fd);
+            \Mix::$app->registry->beforeInitialize($fd);
             // 拦截
-            \Mix::$app->registry->intercept(\Mix::$app->request, \Mix::$app->response);
+            \Mix::$app->registry->handleHandshake(\Mix::$app->request, \Mix::$app->response);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -175,12 +177,14 @@ class WebSocketServer extends AbstractObject
     public function onOpen(\Swoole\WebSocket\Server $server, \Swoole\Http\Request $request)
     {
         try {
+            $fd = $request->fd;
             // 前置初始化
             \Mix::$app->request->beforeInitialize($request);
-            \Mix::$app->wsSession->beforeInitialize($request->fd);
-            \Mix::$app->ws->beforeInitialize($server, $request->fd);
+            \Mix::$app->wsSession->beforeInitialize($fd);
+            \Mix::$app->ws->beforeInitialize($server, $fd);
+            \Mix::$app->registry->beforeInitialize($fd);
             // 处理消息
-            \Mix::$app->registry->handleOpen(\Mix::$app->request);
+            \Mix::$app->registry->handleOpen(\Mix::$app->ws, \Mix::$app->request);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -200,12 +204,14 @@ class WebSocketServer extends AbstractObject
     public function onMessage(\Swoole\WebSocket\Server $server, \Swoole\WebSocket\Frame $frame)
     {
         try {
+            $fd = $frame->fd;
             // 前置初始化
-            \Mix::$app->wsSession->beforeInitialize($frame->fd);
-            \Mix::$app->ws->beforeInitialize($server, $frame->fd);
+            \Mix::$app->wsSession->beforeInitialize($fd);
+            \Mix::$app->ws->beforeInitialize($server, $fd);
             \Mix::$app->frame->beforeInitialize($frame);
+            \Mix::$app->registry->beforeInitialize($fd);
             // 处理消息
-            \Mix::$app->registry->handleMessage(\Mix::$app->frame);
+            \Mix::$app->registry->handleMessage(\Mix::$app->ws, \Mix::$app->frame);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
@@ -231,8 +237,10 @@ class WebSocketServer extends AbstractObject
         try {
             // 前置初始化
             \Mix::$app->wsSession->beforeInitialize($fd);
+            \Mix::$app->ws->beforeInitialize($server, $fd);
+            \Mix::$app->registry->beforeInitialize($fd);
             // 处理连接关闭
-            \Mix::$app->registry->handleClose();
+            \Mix::$app->registry->handleClose(\Mix::$app->ws);
             // 后置初始化
             \Mix::$app->wsSession->afterInitialize();
         } catch (\Throwable $e) {
