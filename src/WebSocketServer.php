@@ -237,6 +237,7 @@ class WebSocketServer extends AbstractObject
             \Mix::$app->registry->beforeInitialize($fd);
             // 处理连接关闭
             \Mix::$app->runClose(\Mix::$app->ws);
+            \Mix::$app->registry->afterInitialize();
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
