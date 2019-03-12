@@ -49,6 +49,8 @@ class WebSocketServer extends AbstractObject
      * @var array
      */
     protected $_setting = [
+        // 开启自定义握手
+        'enable_handshake' => true,
         // 开启协程
         'enable_coroutine' => true,
         // 主进程事件处理线程数
@@ -67,8 +69,6 @@ class WebSocketServer extends AbstractObject
         'max_wait_time'    => 60,
         // 开启后，PDO 协程多次 prepare 才不会有 40ms 延迟
         'open_tcp_nodelay' => true,
-        // 开启自定义握手
-        'enable_handshake' => false,
     ];
 
     /**
