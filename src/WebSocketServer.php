@@ -50,7 +50,7 @@ class WebSocketServer extends AbstractObject
      */
     protected $_setting = [
         // 开启协程
-        'enable_coroutine' => false,
+        'enable_coroutine' => true,
         // 主进程事件处理线程数
         'reactor_num'      => 8,
         // 工作进程数
