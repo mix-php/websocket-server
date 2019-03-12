@@ -73,7 +73,7 @@ class WebSocketServer extends AbstractObject
 
     /**
      * 服务器
-     * @var \Swoole\Http\Server
+     * @var \Swoole\WebSocket\Server
      */
     protected $_server;
 
