@@ -157,7 +157,7 @@ class WebSocketServer extends AbstractObject
     {
         if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
             xgo(function () use ($request, $response) {
-                call_user_func([$this, __FUNCTION__], $request, $response);
+                call_user_func([$this, 'onHandshake'], $request, $response);
             });
             return;
         }
@@ -187,7 +187,7 @@ class WebSocketServer extends AbstractObject
     {
         if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
             xgo(function () use ($server, $request) {
-                call_user_func([$this, __FUNCTION__], $server, $request);
+                call_user_func([$this, 'onOpen'], $server, $request);
             });
             return;
         }
@@ -217,7 +217,7 @@ class WebSocketServer extends AbstractObject
     {
         if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
             xgo(function () use ($server, $frame) {
-                call_user_func([$this, __FUNCTION__], $server, $frame);
+                call_user_func([$this, 'onMessage'], $server, $frame);
             });
             return;
         }
@@ -251,7 +251,7 @@ class WebSocketServer extends AbstractObject
         }
         if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
             xgo(function () use ($server, $fd) {
-                call_user_func([$this, __FUNCTION__], $server, $fd);
+                call_user_func([$this, 'onClose'], $server, $fd);
             });
             return;
         }
@@ -277,7 +277,7 @@ class WebSocketServer extends AbstractObject
     protected function welcome()
     {
         $swooleVersion = swoole_version();
-        $phpVersion = PHP_VERSION;
+        $phpVersion    = PHP_VERSION;
         echo <<<EOL
                              _____
 _______ ___ _____ ___   _____  / /_  ____
