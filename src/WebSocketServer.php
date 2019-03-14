@@ -252,7 +252,7 @@ class WebSocketServer extends AbstractObject
         }
         if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
             xgo(function () use ($server, $fd, $reactorId) {
-                call_user_func([$this, 'onClose'], $server, $fd);
+                call_user_func([$this, 'onClose'], $server, $fd, $reactorId);
             });
             return;
         }
