@@ -242,15 +242,16 @@ class WebSocketServer extends AbstractObject
      * 关闭事件
      * @param \Swoole\WebSocket\Server $server
      * @param int $fd
+     * @param int $reactorId
      */
-    public function onClose(\Swoole\WebSocket\Server $server, int $fd)
+    public function onClose(\Swoole\WebSocket\Server $server, int $fd, int $reactorId)
     {
         // 检查连接是否为有效的WebSocket客户端连接
         if (!$server->isEstablished($fd)) {
             return;
         }
         if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
-            xgo(function () use ($server, $fd) {
+            xgo(function () use ($server, $fd, $reactorId) {
                 call_user_func([$this, 'onClose'], $server, $fd);
             });
             return;
