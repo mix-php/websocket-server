@@ -5,6 +5,7 @@ namespace Mix\WebSocket\Server;
 use Mix\Core\Bean\AbstractObject;
 use Mix\Core\Coroutine;
 use Mix\Helper\ProcessHelper;
+use Mix\WebSocket\Frame;
 
 /**
  * Class WebSocketServer
@@ -225,10 +226,9 @@ class WebSocketServer extends AbstractObject
             $fd = $frame->fd;
             // 前置初始化
             \Mix::$app->ws->beforeInitialize($server, $fd);
-            \Mix::$app->frame->beforeInitialize($frame);
             \Mix::$app->registry->beforeInitialize($fd);
             // 处理消息
-            \Mix::$app->runMessage(\Mix::$app->ws, \Mix::$app->frame);
+            \Mix::$app->runMessage(\Mix::$app->ws, new Frame($frame));
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
