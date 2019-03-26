@@ -91,7 +91,7 @@ class WebSocketServer extends AbstractObject
         // 配置参数
         $this->_setting = $this->setting + $this->_setting;
         $this->_server->set($this->_setting);
-        // 关闭内置协程
+        // 禁用内置协程
         $this->_server->set([
             'enable_coroutine' => false,
         ]);
