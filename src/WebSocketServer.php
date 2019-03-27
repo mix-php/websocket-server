@@ -10,7 +10,7 @@ use Mix\WebSocket\Frame;
 /**
  * Class WebSocketServer
  * @package Mix\WebSocket\Server
- * @author LIUJIAN <coder.keda@gmail.com>
+ * @author liu,jian <coder.keda@gmail.com>
  */
 class WebSocketServer extends AbstractObject
 {
