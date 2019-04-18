@@ -167,9 +167,10 @@ class WebSocketServer extends AbstractObject
             // 前置初始化
             \Mix::$app->request->beforeInitialize($request);
             \Mix::$app->response->beforeInitialize($response);
+            \Mix::$app->ws->beforeInitialize($this->_server, $fd);
             \Mix::$app->registry->beforeInitialize($fd);
             // 拦截
-            \Mix::$app->runHandshake(\Mix::$app->request, \Mix::$app->response);
+            \Mix::$app->runHandshake(\Mix::$app->ws, \Mix::$app->request, \Mix::$app->response);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
         }
