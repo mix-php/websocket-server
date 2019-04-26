@@ -173,10 +173,11 @@ class WebSocketServer extends AbstractObject
             \Mix::$app->runHandshake(\Mix::$app->ws, \Mix::$app->request, \Mix::$app->response);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
-        }
-        // 清扫组件容器
-        if (!$this->_setting['enable_coroutine']) {
-            \Mix::$app->cleanComponents();
+        } finally {
+            // 清扫组件容器
+            if (!$this->_setting['enable_coroutine']) {
+                \Mix::$app->cleanComponents();
+            }
         }
     }
 
@@ -203,10 +204,11 @@ class WebSocketServer extends AbstractObject
             \Mix::$app->runOpen(\Mix::$app->ws, \Mix::$app->request);
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
-        }
-        // 清扫组件容器
-        if (!$this->_setting['enable_coroutine']) {
-            \Mix::$app->cleanComponents();
+        } finally {
+            // 清扫组件容器
+            if (!$this->_setting['enable_coroutine']) {
+                \Mix::$app->cleanComponents();
+            }
         }
     }
 
@@ -232,10 +234,11 @@ class WebSocketServer extends AbstractObject
             \Mix::$app->runMessage(\Mix::$app->ws, new Frame($frame));
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
-        }
-        // 清扫组件容器
-        if (!$this->_setting['enable_coroutine']) {
-            \Mix::$app->cleanComponents();
+        } finally {
+            // 清扫组件容器
+            if (!$this->_setting['enable_coroutine']) {
+                \Mix::$app->cleanComponents();
+            }
         }
     }
 
@@ -266,10 +269,11 @@ class WebSocketServer extends AbstractObject
             \Mix::$app->registry->afterInitialize();
         } catch (\Throwable $e) {
             \Mix::$app->error->handleException($e);
-        }
-        // 清扫组件容器
-        if (!$this->_setting['enable_coroutine']) {
-            \Mix::$app->cleanComponents();
+        } finally {
+            // 清扫组件容器
+            if (!$this->_setting['enable_coroutine']) {
+                \Mix::$app->cleanComponents();
+            }
         }
     }
 
