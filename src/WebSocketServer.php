@@ -122,7 +122,9 @@ class WebSocketServer extends AbstractObject
         // 绑定事件
         $this->_server->on(SwooleEvent::START, [$this, 'onStart']);
         $this->_server->on(SwooleEvent::MANAGER_START, [$this, 'onManagerStart']);
+        $this->_server->on(SwooleEvent::MANAGER_STOP, [$this, 'onManagerStop']);
         $this->_server->on(SwooleEvent::WORKER_START, [$this, 'onWorkerStart']);
+        $this->_server->on(SwooleEvent::WORKER_STOP, [$this, 'onWorkerStop']);
         if ($this->_setting['enable_handshake']) {
             $this->_server->on(SwooleEvent::HANDSHAKE, [$this, 'onHandshake']);
         } else {
@@ -137,7 +139,6 @@ class WebSocketServer extends AbstractObject
         // 启动
         return $this->_server->start();
     }
-
 
     /**
      * 主进程启动事件
