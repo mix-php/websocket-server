@@ -135,7 +135,7 @@ class WebSocketServer extends AbstractObject
         // 欢迎信息
         $this->welcome();
         // 执行回调
-        $this->_setting['hook_start'] and call_user_func($this->_setting['hook_start']);
+        $this->_setting['hook_start'] and call_user_func($this->_setting['hook_start'], $this->_server);
         // 启动
         return $this->_server->start();
     }
@@ -163,16 +163,11 @@ class WebSocketServer extends AbstractObject
             // 进程命名
             ProcessHelper::setProcessTitle(static::SERVER_NAME . ": manager");
             // 执行回调
-            $this->_setting['hook_manager_start'] and call_user_func($this->_setting['hook_manager_start']);
+            $this->_setting['hook_manager_start'] and call_user_func($this->_setting['hook_manager_start'], $server);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
-        } finally {
-            // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
-            if (!$this->_setting['enable_coroutine']) {
-                \Mix::$app->cleanComponents();
-            }
         }
     }
 
@@ -182,25 +177,14 @@ class WebSocketServer extends AbstractObject
      */
     public function onManagerStop(\Swoole\WebSocket\Server $server)
     {
-        if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
-            xgo(function () use ($server) {
-                call_user_func([$this, 'onManagerStart'], $server);
-            });
-            return;
-        }
         try {
 
             // 执行回调
-            $this->_setting['hook_manager_stop'] and call_user_func($this->_setting['hook_manager_stop']);
+            $this->_setting['hook_manager_stop'] and call_user_func($this->_setting['hook_manager_stop'], $server);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
-        } finally {
-            // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
-            if (!$this->_setting['enable_coroutine']) {
-                \Mix::$app->cleanComponents();
-            }
         }
     }
 
@@ -211,12 +195,6 @@ class WebSocketServer extends AbstractObject
      */
     public function onWorkerStart(\Swoole\WebSocket\Server $server, int $workerId)
     {
-        if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
-            xgo(function () use ($server, $workerId) {
-                call_user_func([$this, 'onWorkerStart'], $server, $workerId);
-            });
-            return;
-        }
         try {
 
             // 进程命名
@@ -226,18 +204,13 @@ class WebSocketServer extends AbstractObject
                 ProcessHelper::setProcessTitle(static::SERVER_NAME . ": task #{$workerId}");
             }
             // 执行回调
-            $this->_setting['hook_worker_start'] and call_user_func($this->_setting['hook_worker_start']);
+            $this->_setting['hook_worker_start'] and call_user_func($this->_setting['hook_worker_start'], $server);
             // 实例化App
             new \Mix\WebSocket\Application(require $this->configFile);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
-        } finally {
-            // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
-            if (!$this->_setting['enable_coroutine']) {
-                \Mix::$app->cleanComponents();
-            }
         }
     }
 
@@ -248,25 +221,14 @@ class WebSocketServer extends AbstractObject
      */
     public function onWorkerStop(\Swoole\WebSocket\Server $server, int $workerId)
     {
-        if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
-            xgo(function () use ($server, $workerId) {
-                call_user_func([$this, 'onWorkerStart'], $server, $workerId);
-            });
-            return;
-        }
         try {
 
             // 执行回调
-            $this->_setting['hook_worker_stop'] and call_user_func($this->_setting['hook_worker_stop']);
+            $this->_setting['hook_worker_stop'] and call_user_func($this->_setting['hook_worker_stop'], $server);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
-        } finally {
-            // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
-            if (!$this->_setting['enable_coroutine']) {
-                \Mix::$app->cleanComponents();
-            }
         }
     }
 
@@ -294,13 +256,13 @@ class WebSocketServer extends AbstractObject
             // 拦截
             \Mix::$app->runHandshake(\Mix::$app->ws, \Mix::$app->request, \Mix::$app->response);
             // 执行回调
-            $this->_setting['hook_handshake'] and call_user_func($this->_setting['hook_handshake'], true);
+            $this->_setting['hook_handshake'] and call_user_func($this->_setting['hook_handshake'], true, $this->_server, $request);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['hook_handshake'] and call_user_func($this->_setting['hook_handshake'], false);
+            $this->_setting['hook_handshake'] and call_user_func($this->_setting['hook_handshake'], false, $this->_server, $request);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
@@ -332,13 +294,13 @@ class WebSocketServer extends AbstractObject
             // 处理消息
             \Mix::$app->runOpen(\Mix::$app->ws, \Mix::$app->request);
             // 执行回调
-            $this->_setting['hook_open'] and call_user_func($this->_setting['hook_open'], true);
+            $this->_setting['hook_open'] and call_user_func($this->_setting['hook_open'], true, $server, $request);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['hook_open'] and call_user_func($this->_setting['hook_open'], false);
+            $this->_setting['hook_open'] and call_user_func($this->_setting['hook_open'], false, $server, $request);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
@@ -369,13 +331,13 @@ class WebSocketServer extends AbstractObject
             // 处理消息
             \Mix::$app->runMessage(\Mix::$app->ws, new Frame($frame));
             // 执行回调
-            $this->_setting['hook_message'] and call_user_func($this->_setting['hook_message'], true);
+            $this->_setting['hook_message'] and call_user_func($this->_setting['hook_message'], true, $server, $fd);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['hook_message'] and call_user_func($this->_setting['hook_message'], false);
+            $this->_setting['hook_message'] and call_user_func($this->_setting['hook_message'], false, $server, $fd);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
@@ -411,13 +373,13 @@ class WebSocketServer extends AbstractObject
             \Mix::$app->runClose(\Mix::$app->ws);
             \Mix::$app->registry->afterInitialize();
             // 执行回调
-            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], true);
+            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], true, $server, $fd);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], false);
+            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], false, $server, $fd);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
