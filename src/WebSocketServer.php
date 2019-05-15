@@ -51,51 +51,65 @@ class WebSocketServer extends AbstractObject
      */
     protected $_defaultSetting = [
         // 开启自定义握手
-        'enable_handshake'   => true,
+        'enable_handshake'       => true,
         // 开启协程
-        'enable_coroutine'   => true,
+        'enable_coroutine'       => true,
         // 主进程事件处理线程数
-        'reactor_num'        => 8,
+        'reactor_num'            => 8,
         // 工作进程数
-        'worker_num'         => 8,
+        'worker_num'             => 8,
         // 任务进程数
-        'task_worker_num'    => 0,
+        'task_worker_num'        => 0,
         // PID 文件
-        'pid_file'           => '/var/run/mix-websocketd.pid',
+        'pid_file'               => '/var/run/mix-websocketd.pid',
         // 日志文件路径
-        'log_file'           => '/tmp/mix-websocketd.log',
+        'log_file'               => '/tmp/mix-websocketd.log',
         // 异步安全重启
-        'reload_async'       => true,
+        'reload_async'           => true,
         // 退出等待时间
-        'max_wait_time'      => 60,
+        'max_wait_time'          => 60,
         // 开启后，PDO 协程多次 prepare 才不会有 40ms 延迟
-        'open_tcp_nodelay'   => true,
+        'open_tcp_nodelay'       => true,
         // 进程的最大任务数
-        'max_request'        => 0,
+        'max_request'            => 0,
         // 主进程启动事件回调
-        'hook_start'         => null,
+        'hook_start'             => null,
         // 主进程停止事件回调
-        'hook_shutdown'      => null,
+        'hook_shutdown'          => null,
         // 管理进程启动事件回调
-        'hook_manager_start' => null,
+        'hook_manager_start'     => null,
         // 工作进程错误事件
-        'hook_worker_error'  => null,
+        'hook_worker_error'      => null,
         // 管理进程停止事件回调
-        'hook_manager_stop'  => null,
+        'hook_manager_stop'      => null,
         // 工作进程启动事件回调
-        'hook_worker_start'  => null,
+        'hook_worker_start'      => null,
         // 工作进程停止事件回调
-        'hook_worker_stop'   => null,
+        'hook_worker_stop'       => null,
         // 工作进程退出事件回调
-        'hook_worker_exit'   => null,
-        // 握手事件回调
-        'hook_handshake'     => null,
-        // 开启事件回调
-        'hook_open'          => null,
-        // 消息事件回调
-        'hook_message'       => null,
-        // 关闭事件回调
-        'hook_close'         => null,
+        'hook_worker_exit'       => null,
+        // 请求事件回调
+        'hook_request'           => null,
+        // 请求成功回调
+        'hook_request_success'   => null,
+        // 请求错误回调
+        'hook_request_error'     => null,
+        // 握手成功回调
+        'hook_handshake_success' => null,
+        // 握手错误回调
+        'hook_handshake_error'   => null,
+        // 开启成功回调
+        'hook_open_success'      => null,
+        // 开启错误回调
+        'hook_open_error'        => null,
+        // 消息成功回调
+        'hook_message_success'   => null,
+        // 消息错误回调
+        'hook_message_error'     => null,
+        // 关闭成功回调
+        'hook_close_success'     => null,
+        // 关闭错误回调
+        'hook_close_error'       => null,
     ];
 
     /**
@@ -134,6 +148,7 @@ class WebSocketServer extends AbstractObject
         $this->_server->on(SwooleEvent::WORKER_START, [$this, 'onWorkerStart']);
         $this->_server->on(SwooleEvent::WORKER_STOP, [$this, 'onWorkerStop']);
         $this->_server->on(SwooleEvent::WORKER_EXIT, [$this, 'onWorkerExit']);
+        $this->_server->on(SwooleEvent::REQUEST, [$this, 'onRequest']);
         if ($this->_setting['enable_handshake']) {
             $this->_server->on(SwooleEvent::HANDSHAKE, [$this, 'onHandshake']);
         } else {
@@ -296,6 +311,27 @@ class WebSocketServer extends AbstractObject
     }
 
     /**
+     * 请求事件
+     * @param \Swoole\Http\Request $request
+     * @param \Swoole\Http\Response $response
+     */
+    public function onRequest(\Swoole\Http\Request $request, \Swoole\Http\Response $response)
+    {
+        try {
+
+            // 执行回调
+            $this->_setting['hook_request'] and call_user_func($this->_setting['hook_request'], $this->_server, $request, $response);
+            $this->_setting['hook_request_success'] and call_user_func($this->_setting['hook_request_success'], $this->_server, $request);
+
+        } catch (\Throwable $e) {
+            // 错误处理
+            \Mix::$app->error->handleException($e);
+            // 执行回调
+            $this->_setting['hook_request_error'] and call_user_func($this->_setting['hook_request_error'], $this->_server, $request);
+        }
+    }
+
+    /**
      * 握手事件
      * @param \Swoole\Http\Request $request
      * @param \Swoole\Http\Response $response
@@ -319,13 +355,13 @@ class WebSocketServer extends AbstractObject
             // 拦截
             \Mix::$app->runHandshake(\Mix::$app->ws, \Mix::$app->request, \Mix::$app->response);
             // 执行回调
-            $this->_setting['hook_handshake'] and call_user_func($this->_setting['hook_handshake'], true, $this->_server, $request);
+            $this->_setting['hook_handshake_success'] and call_user_func($this->_setting['hook_handshake_success'], $this->_server, $request);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['hook_handshake'] and call_user_func($this->_setting['hook_handshake'], false, $this->_server, $request);
+            $this->_setting['hook_handshake_error'] and call_user_func($this->_setting['hook_handshake_error'], $this->_server, $request);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
@@ -357,13 +393,13 @@ class WebSocketServer extends AbstractObject
             // 处理消息
             \Mix::$app->runOpen(\Mix::$app->ws, \Mix::$app->request);
             // 执行回调
-            $this->_setting['hook_open'] and call_user_func($this->_setting['hook_open'], true, $server, $request);
+            $this->_setting['hook_open_success'] and call_user_func($this->_setting['hook_open_success'], $server, $request);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['hook_open'] and call_user_func($this->_setting['hook_open'], false, $server, $request);
+            $this->_setting['hook_open_error'] and call_user_func($this->_setting['hook_open_error'], $server, $request);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
@@ -394,13 +430,13 @@ class WebSocketServer extends AbstractObject
             // 处理消息
             \Mix::$app->runMessage(\Mix::$app->ws, new Frame($frame));
             // 执行回调
-            $this->_setting['hook_message'] and call_user_func($this->_setting['hook_message'], true, $server, $fd);
+            $this->_setting['hook_message_success'] and call_user_func($this->_setting['hook_message_success'], $server, $fd);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['hook_message'] and call_user_func($this->_setting['hook_message'], false, $server, $fd);
+            $this->_setting['hook_message_error'] and call_user_func($this->_setting['hook_message_error'], $server, $fd);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
@@ -436,13 +472,13 @@ class WebSocketServer extends AbstractObject
             \Mix::$app->runClose(\Mix::$app->ws);
             \Mix::$app->registry->afterInitialize();
             // 执行回调
-            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], true, $server, $fd);
+            $this->_setting['hook_close_success'] and call_user_func($this->_setting['hook_close_success'], $server, $fd);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], false, $server, $fd);
+            $this->_setting['hook_close_error'] and call_user_func($this->_setting['hook_close_error'], $server, $fd);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {

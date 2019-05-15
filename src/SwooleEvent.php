@@ -51,6 +51,11 @@ class SwooleEvent
     const WORKER_EXIT = 'workerExit';
 
     /**
+     * Request
+     */
+    const REQUEST = 'request';
+
+    /**
      * HandShake
      */
     const HANDSHAKE = 'handshake';
