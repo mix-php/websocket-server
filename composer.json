@@ -18,6 +18,7 @@
   "require": {
     "php": ">=7.0.0",
     "mix/framework": "~2.0.0",
+    "mix/server": "~2.0.0",
     "mix/websocket": "~2.0.0"
   },
   "autoload": {
